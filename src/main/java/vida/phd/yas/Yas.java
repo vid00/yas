@@ -1,6 +1,6 @@
 package vida.phd.yas;
 
-import com.ehsunbehravesh.commandline.CommandLine;
+import vida.phd.yas.commandline.CommandLine;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
