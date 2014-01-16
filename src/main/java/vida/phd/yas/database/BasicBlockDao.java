@@ -119,4 +119,22 @@ public class BasicBlockDao {
     statement.setInt(1, malwareId);
     statement.executeUpdate();
   }
+
+  public BasicBlock insert(Connection conn, BasicBlock basicBlock) throws SQLException {    
+    String sql = "INSERT INTO BASIC_BLOCK (MALWARE_ID, HASH, COUNT) VALUES (?, ?, ?)";
+    PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+    statement.setInt(1, basicBlock.getMalwareId());
+    statement.setString(2, basicBlock.getHash());
+    statement.setInt(3, basicBlock.getCount());
+
+    statement.executeUpdate();
+    ResultSet resultSet = statement.getGeneratedKeys();
+
+    if (resultSet.next()) {      
+      basicBlock.setId(resultSet.getInt(1));      
+    }
+
+    return basicBlock;
+  }
 }

@@ -1,10 +1,8 @@
 package vida.phd.yas.family;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import vida.phd.yas.Utils;
 import vida.phd.yas.database.BasicBlockDao;
 import vida.phd.yas.database.Database;
 import vida.phd.yas.database.FamilyDao;
@@ -21,6 +18,7 @@ import vida.phd.yas.database.MalwareDao;
 import vida.phd.yas.database.entity.BasicBlock;
 import vida.phd.yas.database.entity.Family;
 import vida.phd.yas.database.entity.Malware;
+import vida.phd.yas.malware.MalwareReader;
 
 public class FamilyLoader {
 
@@ -78,34 +76,51 @@ public class FamilyLoader {
     }
   }
 
+  
   private void process(File file, Family family, Connection conn) throws FileNotFoundException, IOException, SQLException {
     String malwareName = file.getName();
 
     MalwareDao malwareDao = new MalwareDao();
+    BasicBlockDao basicBlockDao = new BasicBlockDao();
     Malware malware = malwareDao.insert(conn, malwareName, family.getId());
     countOfMalwares++;
-
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      String line;
-      BasicBlockDao basicBlockDao = new BasicBlockDao();
-      while ((line = reader.readLine()) != null) {
-        line = line.trim();
-        if (line.length() > 0) {
-          BasicBlock basicBlock = basicBlockDao.read(conn, malware.getId(), line);
-
-          if (basicBlock != null) {
-            basicBlock.setCount(basicBlock.getCount() + 1);
-            basicBlockDao.update(conn, basicBlock);
-            System.out.println(MessageFormat.format("Basic block added: {0} - frequency: {1}", Utils.shortenHash(basicBlock.getHash()), basicBlock.getCount()));
-          } else {
-            basicBlockDao.insert(conn, malware.getId(), line);
-            System.out.println(MessageFormat.format("Basic block added: {0} - frequency: 1", Utils.shortenHash(line)));
-          }
-
-          countOfBasicBlocks++;
-        }
+    
+    MalwareReader malwareReader = new MalwareReader(file);
+    List<BasicBlock> basicBlocks = malwareReader.read();
+    
+    System.out.println(MessageFormat.format("Saving {0} to the database ... % 1", malware.getName()));
+    int size = basicBlocks.size();
+    int index = 0;
+    for (BasicBlock basicBlock : basicBlocks) {
+      index++;
+      basicBlock.setMalwareId(malware.getId());
+      basicBlockDao.insert(conn, basicBlock);
+      int percent = (int)((index * 100.0f) / size);
+      if (percent > 1 && (percent % 5) == 0) {        
+        System.out.println(MessageFormat.format("Saving {0} to the database ... % {1}", malware.getName(), percent));
       }
     }
+    System.out.println("Saved to the database.");
+    /*
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+    String line;
+    BasicBlockDao basicBlockDao = new BasicBlockDao();
+    while ((line = reader.readLine()) != null) {
+    line = line.trim();
+    if (line.length() > 0) {
+    BasicBlock basicBlock = basicBlockDao.read(conn, malware.getId(), line);
+    if (basicBlock != null) {
+    basicBlock.setCount(basicBlock.getCount() + 1);
+    basicBlockDao.update(conn, basicBlock);
+    System.out.println(MessageFormat.format("Basic block added: {0} - frequency: {1}", Utils.shortenHash(basicBlock.getHash()), basicBlock.getCount()));
+    } else {
+    basicBlockDao.insert(conn, malware.getId(), line);
+    System.out.println(MessageFormat.format("Basic block added: {0} - frequency: 1", Utils.shortenHash(line)));
+    }
+    countOfBasicBlocks++;
+    }
+    }
+    }*/
   }
 
   public File getDirectory() {
