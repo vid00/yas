@@ -1,9 +1,5 @@
 package vida.phd.yas.family;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class FailedFile {
 
   private String filename;

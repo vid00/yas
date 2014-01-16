@@ -1,9 +1,5 @@
 package vida.phd.yas.database.entity;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class BasicBlock extends Entity {
   private String hash;
   private Integer malwareId;

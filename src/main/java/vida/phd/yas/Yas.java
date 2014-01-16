@@ -23,10 +23,6 @@ import vida.phd.yas.database.entity.Malware;
 import vida.phd.yas.family.FailedFile;
 import vida.phd.yas.family.FamilyLoader;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class Yas {
 
   private static final String version = "0.3.0";

@@ -9,10 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import vida.phd.yas.database.entity.Family;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class FamilyDao {
 
   public Family load(Connection conn, Integer id) throws SQLException {

@@ -22,10 +22,6 @@ import vida.phd.yas.database.entity.BasicBlock;
 import vida.phd.yas.database.entity.Family;
 import vida.phd.yas.database.entity.Malware;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class FamilyLoader {
 
   private File directory;

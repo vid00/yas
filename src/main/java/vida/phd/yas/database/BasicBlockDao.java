@@ -9,10 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import vida.phd.yas.database.entity.BasicBlock;
 
-/**
- *
- * @author ehsun7b
- */
 public class BasicBlockDao {
 
   public BasicBlock read(Connection conn, Integer malwareId, String hash) throws SQLException {

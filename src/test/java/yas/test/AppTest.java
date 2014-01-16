@@ -1,4 +1,4 @@
-package com.ehsunbehravesh.sample.yas;
+package yas.test;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

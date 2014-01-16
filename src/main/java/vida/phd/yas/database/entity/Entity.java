@@ -1,9 +1,5 @@
 package vida.phd.yas.database.entity;
 
-/**
- *
- * @author ehsun.behravesh
- */
 public class Entity {
 
   private Integer id;

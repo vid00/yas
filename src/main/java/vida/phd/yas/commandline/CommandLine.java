@@ -4,12 +4,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: ehsun.behravesh
- * Date: 10/17/13
- * Time: 4:25 PM
- */
 public class CommandLine {
 
     private InputStream is;
