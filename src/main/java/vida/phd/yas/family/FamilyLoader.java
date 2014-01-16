@@ -88,6 +88,7 @@ public class FamilyLoader {
     MalwareReader malwareReader = new MalwareReader(file);
     List<BasicBlock> basicBlocks = malwareReader.read();
     
+    int oldPercent = 1;
     System.out.println(MessageFormat.format("Saving {0} to the database ... % 1", malware.getName()));
     int size = basicBlocks.size();
     int index = 0;
@@ -96,7 +97,8 @@ public class FamilyLoader {
       basicBlock.setMalwareId(malware.getId());
       basicBlockDao.insert(conn, basicBlock);
       int percent = (int)((index * 100.0f) / size);
-      if (percent > 1 && (percent % 5) == 0) {        
+      if (percent > oldPercent) {        
+        oldPercent = percent;
         System.out.println(MessageFormat.format("Saving {0} to the database ... % {1}", malware.getName(), percent));
       }
     }
