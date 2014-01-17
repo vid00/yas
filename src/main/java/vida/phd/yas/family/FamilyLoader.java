@@ -92,6 +92,7 @@ public class FamilyLoader {
     System.out.println(MessageFormat.format("Saving {0} to the database ... % 1", malware.getName()));
     int size = basicBlocks.size();
     int index = 0;
+    countOfBasicBlocks += size;
     for (BasicBlock basicBlock : basicBlocks) {
       index++;
       basicBlock.setMalwareId(malware.getId());

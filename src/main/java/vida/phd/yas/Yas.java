@@ -175,13 +175,14 @@ public class Yas {
 
   private void addFamily(String name, String path) {
     try (Connection conn = Database.INSTANCE.getConnection()) {
+      conn.setAutoCommit(false);
       FamilyLoader familyLoader = new FamilyLoader(name, path);
       familyLoader.load(conn);
       System.out.println("Family added successfully.");
       System.out.println("Malwares: " + familyLoader.getCountOfMalwares());
       System.out.println("Basic blocks: " + familyLoader.getCountOfBasicBlocks());
       System.out.println("Skiped files: " + familyLoader.getFailedFiles().size());
-
+      conn.commit();
       int i = 1;
       for (FailedFile failedFile : familyLoader.getFailedFiles()) {
         System.out.println(MessageFormat.format("{0}. {1}", i++, failedFile.getMessage()));
