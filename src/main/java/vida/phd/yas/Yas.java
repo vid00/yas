@@ -25,7 +25,7 @@ import vida.phd.yas.family.FamilyLoader;
 
 public class Yas {
 
-  private static final String version = "0.3.0";
+  private static final String version = "0.4.0";
   private CommandLine getter;
   private boolean running;
 
@@ -106,7 +106,7 @@ public class Yas {
     System.out.println("families");
     System.out.println("malwares");
     System.out.println("score");
-    
+
   }
 
   private void showVersion() {
@@ -151,7 +151,9 @@ public class Yas {
       sql = sql.concat("MALWARE_ID INTEGER NOT NULL,");
       sql = sql.concat("HASH TEXT NOT NULL,");
       sql = sql.concat("COUNT INTEGER,");
-      sql = sql.concat("TERM_FREQ REAL");
+      sql = sql.concat("TERM_FREQ REAL,");
+      sql = sql.concat("INV_DOC_FREQ REAL,");
+      sql = sql.concat("WEIGHT REAL");
       sql = sql.concat(")");
 
       stmnt.executeUpdate(sql);
@@ -290,14 +292,129 @@ public class Yas {
 
   private void updateScore(boolean showBasicBlock) {
     updateTermFrequency(showBasicBlock);
+    updateInverseDocumentFrequency(showBasicBlock);
+    //updateWeight(showBasicBlock);
+  }
+
+  /*
+  private void updateWeight(boolean showBasicBlock) {
+    System.out.println("Updating WEIGHT ...");
+
+    waitFor(500);
+
+    try (Connection conn = Database.INSTANCE.getConnection()) {
+      conn.setAutoCommit(false);
+      FamilyDao familyDao = new FamilyDao();
+      MalwareDao malwareDao = new MalwareDao();
+      BasicBlockDao basicBlockDao = new BasicBlockDao();
+
+      List<Family> families = familyDao.loadAll(conn);      
+      for (Family family : families) {
+        List<Malware> malwares = malwareDao.loadByFamily(conn, family.getId());
+
+        System.out.println("Family: " + family.getName());
+        waitFor(300);
+
+        for (Malware malware : malwares) {
+          System.out.println("\tMalware: " + malware.getName());
+          waitFor(500);
+
+          List<BasicBlock> basicBlocks = basicBlockDao.loadByMalware(conn, malware.getId());
+          int countOfBasicBlocks = basicBlocks.size();
+          int index = 0;
+          int oldPercent = 0;
+          for (BasicBlock basicBlock : basicBlocks) {
+            index++;            
+
+            double weight = basicBlock.getTermFrequency() * basicBlock.getInverseDocumentFrequency();
+            basicBlock.setWeight(weight);
+            basicBlockDao.update(conn, basicBlock);
+            if (showBasicBlock) {
+              DecimalFormat df = new DecimalFormat("#.#########");
+              df.setDecimalSeparatorAlwaysShown(true);
+              System.out.println("\t\t" + Utils.shortenHash(basicBlock.getHash()) + " " + df.format(weight));
+            } // if 
+
+            int percent = (int) ((index * 100.0f) / countOfBasicBlocks);
+            if (percent > oldPercent) {
+              oldPercent = percent;
+              System.out.println(MessageFormat.format("\t\t% {0}", percent));
+              waitFor(100);
+            } // if
+          } // for each
+        } // for each
+      }
+      conn.commit();
+    } catch (SQLException | ClassNotFoundException ex) {
+      Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
+    }
+  }*/
+
+  private void updateInverseDocumentFrequency(boolean showBasicBlock) {
+    System.out.println("Updating INVERSE DOCUMENT FREQUENCY ...");
+
+    waitFor(500);
+
+    try (Connection conn = Database.INSTANCE.getConnection()) {
+      conn.setAutoCommit(false);
+      FamilyDao familyDao = new FamilyDao();
+      MalwareDao malwareDao = new MalwareDao();
+      BasicBlockDao basicBlockDao = new BasicBlockDao();
+
+      List<Family> families = familyDao.loadAll(conn);
+      int countOfAllMalwares = malwareDao.loadAll(conn).size();
+      for (Family family : families) {
+        List<Malware> malwares = malwareDao.loadByFamily(conn, family.getId());
+
+        System.out.println("Family: " + family.getName());
+        waitFor(300);
+
+        for (Malware malware : malwares) {
+          System.out.println("\tMalware: " + malware.getName());
+          waitFor(500);
+
+          List<BasicBlock> basicBlocks = basicBlockDao.loadByMalware(conn, malware.getId());
+          int countOfBasicBlocks = basicBlocks.size();
+          int index = 0;
+          int oldPercent = 0;
+          for (BasicBlock basicBlock : basicBlocks) {
+            index++;
+            String hash = basicBlock.getHash();
+            int countOfMalwares = basicBlockDao.getCountOfMalwaresHavingBasicBlock(conn, hash);
+
+            double inverseDocumentFrequency = (double) countOfAllMalwares / countOfMalwares;
+            double weight = inverseDocumentFrequency * basicBlock.getTermFrequency();
+            basicBlock.setInverseDocumentFrequency(inverseDocumentFrequency);
+            basicBlock.setWeight(weight);
+            basicBlockDao.update(conn, basicBlock);
+            if (showBasicBlock) {
+              DecimalFormat df = new DecimalFormat("#.#########");
+              df.setDecimalSeparatorAlwaysShown(true);
+              System.out.println("\t\t" + Utils.shortenHash(basicBlock.getHash()) + " IDF: " + df.format(inverseDocumentFrequency) + " WEIGHT: " + df.format(weight));
+            } // if 
+
+            int percent = (int) ((index * 100.0f) / countOfBasicBlocks);
+            if (percent > oldPercent) {
+              oldPercent = percent;
+              System.out.println(MessageFormat.format("\t\t% {0}", percent));
+              waitFor(100);
+            } // if
+          } // for each
+        } // for each
+      }
+      conn.commit();
+    } catch (SQLException | ClassNotFoundException ex) {
+      Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
+    }
   }
 
   private void updateTermFrequency(boolean showBasicBlock) {
     System.out.println("Updating TERM FREQUENCY ...");
 
-    waitFor(2000);
+    waitFor(500);
 
     try (Connection conn = Database.INSTANCE.getConnection()) {
+      conn.setAutoCommit(false);
       FamilyDao familyDao = new FamilyDao();
       MalwareDao malwareDao = new MalwareDao();
       BasicBlockDao basicBlockDao = new BasicBlockDao();
@@ -308,11 +425,11 @@ public class Yas {
         List<Malware> malwares = malwareDao.loadByFamily(conn, family.getId());
 
         System.out.println("Family: " + family.getName());
-        waitFor(1000);
+        waitFor(300);
 
         for (Malware malware : malwares) {
           System.out.println("\tMalware: " + malware.getName());
-          waitFor(2000);
+          waitFor(500);
 
           long totalCountOfBasicBlocks = basicBlockDao.countByMalware(conn, malware.getId());
 
@@ -329,11 +446,10 @@ public class Yas {
           }
         }
       }
-
+      conn.commit();
     } catch (SQLException | ClassNotFoundException ex) {
       Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
     }
-
   }
 
   private void waitFor(int millisec) {
@@ -357,7 +473,7 @@ public class Yas {
 
       for (Malware malware : malwares) {
         if (count == perPage && index < malwares.size()) {
-          if (!wannaContinue()) {            
+          if (!wannaContinue()) {
             break;
           }
           count = 0;

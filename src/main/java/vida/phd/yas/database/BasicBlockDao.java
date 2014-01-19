@@ -101,12 +101,15 @@ public class BasicBlockDao {
   }
 
   public BasicBlock update(Connection conn, final BasicBlock basicBlock) throws SQLException {
-    String sql = "UPDATE BASIC_BLOCK SET COUNT = ?, TERM_FREQ = ? WHERE ID = ?";
+    String sql = "UPDATE BASIC_BLOCK SET COUNT = ?, TERM_FREQ = ?, ";
+    sql = sql.concat("INV_DOC_FREQ = ?, WEIGHT = ? WHERE ID = ?");
 
     PreparedStatement statement = conn.prepareStatement(sql);
     statement.setInt(1, basicBlock.getCount());
     statement.setDouble(2, basicBlock.getTermFrequency());
-    statement.setInt(3, basicBlock.getId());
+    statement.setDouble(3, basicBlock.getInverseDocumentFrequency());
+    statement.setDouble(4, basicBlock.getWeight());
+    statement.setInt(5, basicBlock.getId());
 
     statement.executeUpdate();
 
@@ -137,4 +140,17 @@ public class BasicBlockDao {
 
     return basicBlock;
   }  
+
+  public int getCountOfMalwaresHavingBasicBlock(Connection conn, String hash) throws SQLException {    
+    String sql = "SELECT count(*) FROM malware m inner join basic_block b on (m.id = b.malware_id) where b.hash = ?";
+    PreparedStatement statement = conn.prepareStatement(sql);
+    
+    statement.setString(1, hash);
+    ResultSet resultSet = statement.executeQuery();
+    if (resultSet.next()) {
+      return resultSet.getInt(1);
+    } else {
+      throw new SQLException("NO RESULT!!!");
+    }
+  }
 }

@@ -63,7 +63,7 @@ public class FamilyLoader {
         if (oldFamily == null) {
           process(file, family, conn);
         } else {
-          failedFiles.add(new FailedFile(file.getName(), MessageFormat.format("The file {0} has been already added to the family {1}", file.getName(), oldFamily)));
+          failedFiles.add(new FailedFile(file.getName(), MessageFormat.format("The file {0} had been already added to the family {1}", file.getName(), oldFamily)));
         }
       }
     } else { // add single file
@@ -71,7 +71,7 @@ public class FamilyLoader {
       if (oldFamily == null) {
         process(directory, family, conn);
       } else {
-        failedFiles.add(new FailedFile(directory.getName(), MessageFormat.format("The file {0} has been already added to the family {1}", directory.getName(), oldFamily)));
+        failedFiles.add(new FailedFile(directory.getName(), MessageFormat.format("The file {0} had been already added to the family {1}", directory.getName(), oldFamily)));
       }
     }
   }
