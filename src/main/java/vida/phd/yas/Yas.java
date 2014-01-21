@@ -25,7 +25,7 @@ import vida.phd.yas.family.FamilyLoader;
 
 public class Yas {
 
-  private static final String version = "0.4.0";
+  private static final String version = "0.4.1";
   private CommandLine getter;
   private boolean running;
 
@@ -58,7 +58,7 @@ public class Yas {
               timeCommand(command);
             } else if (command.equalsIgnoreCase("help")) {
               showYasHelp();
-            } else if (command.startsWith("score")) {
+            } else if (command.startsWith("weight")) {
               scoreCommand(command);
             } else {
               System.out.println("Unknown Command!");
@@ -269,7 +269,7 @@ public class Yas {
   }
 
   private void scoreCommand(final String command) {
-    if (command.equals("score")) {
+    if (command.equals("weight")) {
       showScoreHelp();
     } else {
       String[] parts = splitCommand(command);
