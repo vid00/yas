@@ -268,6 +268,7 @@ public class Yas {
     }
   }
 
+  
   private void scoreCommand(final String command) {
     if (command.equals("weight")) {
       showScoreHelp();
