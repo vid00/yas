@@ -105,7 +105,7 @@ public class Yas {
     System.out.println("family");
     System.out.println("families");
     System.out.println("malwares");
-    System.out.println("score");
+    System.out.println("weight");
 
   }
 
@@ -285,10 +285,10 @@ public class Yas {
   }
 
   private void showScoreHelp() {
-    System.out.println("Score command is not valid!");
+    System.out.println("Weight command is not valid!");
     System.out.println("e.g.");
-    System.out.println("score update");
-    System.out.println("score update show");
+    System.out.println("weight update");
+    System.out.println("weight update show");
   }
 
   private void updateScore(boolean showBasicBlock) {
