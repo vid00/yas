@@ -25,7 +25,7 @@ import vida.phd.yas.family.FamilyLoader;
 
 public class Yas {
 
-  private static final String version = "0.4.1";
+  private static final String version = "0.4.2";
   private CommandLine getter;
   private boolean running;
 
