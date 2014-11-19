@@ -1,12 +1,15 @@
 package vida.phd.yas.database.entity;
 
 public class BasicBlock extends Entity {
+
   private String hash;
   private Integer malwareId;
   private Integer count;
   private double termFrequency;
   private double inverseDocumentFrequency;
+  private double inverseDocumentFrequencyInFamily;
   private double weight;
+  private double weightInFam;
 
   public double getWeight() {
     return weight;
@@ -46,7 +49,7 @@ public class BasicBlock extends Entity {
 
   public void setCount(Integer count) {
     this.count = count;
-  }  
+  }
 
   public double getTermFrequency() {
     return termFrequency;
@@ -54,5 +57,22 @@ public class BasicBlock extends Entity {
 
   public void setTermFrequency(double termFrequency) {
     this.termFrequency = termFrequency;
-  }    
+  }
+
+  public double getInverseDocumentFrequencyInFamily() {
+    return inverseDocumentFrequencyInFamily;
+  }
+
+  public void setInverseDocumentFrequencyInFamily(double inverseDocumentFrequencyInFamily) {
+    this.inverseDocumentFrequencyInFamily = inverseDocumentFrequencyInFamily;
+  }
+
+  public double getWeightInFam() {
+    return weightInFam;
+  }
+
+  public void setWeightInFam(double weightInFam) {
+    this.weightInFam = weightInFam;
+  }
+
 }

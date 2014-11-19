@@ -25,7 +25,7 @@ import vida.phd.yas.family.FamilyLoader;
 
 public class Yas {
 
-  private static final String version = "0.4.2";
+  private static final String version = "0.4.3";
   private CommandLine getter;
   private boolean running;
 
@@ -60,6 +60,8 @@ public class Yas {
               showYasHelp();
             } else if (command.startsWith("weight")) {
               scoreCommand(command);
+            } else if (command.startsWith("query")) {
+              queryCommand(command);
             } else {
               System.out.println("Unknown Command!");
               System.out.println("");
@@ -153,7 +155,9 @@ public class Yas {
       sql = sql.concat("COUNT INTEGER,");
       sql = sql.concat("TERM_FREQ REAL,");
       sql = sql.concat("INV_DOC_FREQ REAL,");
-      sql = sql.concat("WEIGHT REAL");
+      sql = sql.concat("INV_DOC_FREQ_FAM REAL,");
+      sql = sql.concat("WEIGHT REAL,");
+      sql = sql.concat("WEIGHT_FAM REAL");
       sql = sql.concat(")");
 
       stmnt.executeUpdate(sql);
@@ -202,6 +206,8 @@ public class Yas {
       if (family != null) {
         MalwareDao malwareDao = new MalwareDao();
         List<Malware> malwares = malwareDao.loadByFamily(conn, family.getId());
+
+        System.out.println(malwares.size() + " malwares.");
 
         for (Malware malware : malwares) {
           System.out.println(malware.getName());
@@ -268,7 +274,6 @@ public class Yas {
     }
   }
 
-  
   private void scoreCommand(final String command) {
     if (command.equals("weight")) {
       showScoreHelp();
@@ -294,65 +299,10 @@ public class Yas {
   private void updateScore(boolean showBasicBlock) {
     updateTermFrequency(showBasicBlock);
     updateInverseDocumentFrequency(showBasicBlock);
-    //updateWeight(showBasicBlock);
   }
 
-  /*
-  private void updateWeight(boolean showBasicBlock) {
-    System.out.println("Updating WEIGHT ...");
-
-    waitFor(500);
-
-    try (Connection conn = Database.INSTANCE.getConnection()) {
-      conn.setAutoCommit(false);
-      FamilyDao familyDao = new FamilyDao();
-      MalwareDao malwareDao = new MalwareDao();
-      BasicBlockDao basicBlockDao = new BasicBlockDao();
-
-      List<Family> families = familyDao.loadAll(conn);      
-      for (Family family : families) {
-        List<Malware> malwares = malwareDao.loadByFamily(conn, family.getId());
-
-        System.out.println("Family: " + family.getName());
-        waitFor(300);
-
-        for (Malware malware : malwares) {
-          System.out.println("\tMalware: " + malware.getName());
-          waitFor(500);
-
-          List<BasicBlock> basicBlocks = basicBlockDao.loadByMalware(conn, malware.getId());
-          int countOfBasicBlocks = basicBlocks.size();
-          int index = 0;
-          int oldPercent = 0;
-          for (BasicBlock basicBlock : basicBlocks) {
-            index++;            
-
-            double weight = basicBlock.getTermFrequency() * basicBlock.getInverseDocumentFrequency();
-            basicBlock.setWeight(weight);
-            basicBlockDao.update(conn, basicBlock);
-            if (showBasicBlock) {
-              DecimalFormat df = new DecimalFormat("#.#########");
-              df.setDecimalSeparatorAlwaysShown(true);
-              System.out.println("\t\t" + Utils.shortenHash(basicBlock.getHash()) + " " + df.format(weight));
-            } // if 
-
-            int percent = (int) ((index * 100.0f) / countOfBasicBlocks);
-            if (percent > oldPercent) {
-              oldPercent = percent;
-              System.out.println(MessageFormat.format("\t\t% {0}", percent));
-              waitFor(100);
-            } // if
-          } // for each
-        } // for each
-      }
-      conn.commit();
-    } catch (SQLException | ClassNotFoundException ex) {
-      Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
-    }
-  }*/
-
   private void updateInverseDocumentFrequency(boolean showBasicBlock) {
-    System.out.println("Updating INVERSE DOCUMENT FREQUENCY ...");
+    System.out.println("Updating INVERSE DOCUMENT FREQUENCY & WEIGHT...");
 
     waitFor(500);
 
@@ -382,16 +332,24 @@ public class Yas {
             index++;
             String hash = basicBlock.getHash();
             int countOfMalwares = basicBlockDao.getCountOfMalwaresHavingBasicBlock(conn, hash);
+            int countOfMalwaresInFam = basicBlockDao.getCountOfMalwaresHavingBasicBlockInFamily(conn, hash, family.getId());
 
             double inverseDocumentFrequency = (double) countOfAllMalwares / countOfMalwares;
+            double inverseDocumentFrequencyInFam = (double) malwares.size() / countOfMalwaresInFam;
             double weight = inverseDocumentFrequency * basicBlock.getTermFrequency();
+            double weightInFam = inverseDocumentFrequencyInFam * basicBlock.getTermFrequency();
+
             basicBlock.setInverseDocumentFrequency(inverseDocumentFrequency);
+            basicBlock.setInverseDocumentFrequencyInFamily(inverseDocumentFrequencyInFam);
             basicBlock.setWeight(weight);
+            basicBlock.setWeightInFam(weightInFam);
+
             basicBlockDao.update(conn, basicBlock);
+
             if (showBasicBlock) {
               DecimalFormat df = new DecimalFormat("#.#########");
               df.setDecimalSeparatorAlwaysShown(true);
-              System.out.println("\t\t" + Utils.shortenHash(basicBlock.getHash()) + " IDF: " + df.format(inverseDocumentFrequency) + " WEIGHT: " + df.format(weight));
+              System.out.println("\t\t" + Utils.shortenHash(basicBlock.getHash()) + " IDF: " + df.format(inverseDocumentFrequency) + " IDF Family: " + df.format(inverseDocumentFrequencyInFam) + " WEIGHT: " + df.format(weight));
             } // if 
 
             int percent = (int) ((index * 100.0f) / countOfBasicBlocks);
@@ -454,16 +412,18 @@ public class Yas {
   }
 
   private void waitFor(int millisec) {
-    try {
-      Thread.sleep(millisec);
-    } catch (InterruptedException ex) {
-      Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
-    }
+    /*
+     try {
+     Thread.sleep(millisec);
+     } catch (InterruptedException ex) {
+     Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
+     }*/
   }
 
   private void malwaresCommand(String command) {
     try (Connection conn = Database.INSTANCE.getConnection()) {
       MalwareDao malwareDao = new MalwareDao();
+      BasicBlockDao basicBlockDao = new BasicBlockDao();
       List<Malware> malwares = malwareDao.loadAll(conn);
       System.out.println("Malwares: " + malwares.size());
       System.out.println("");
@@ -479,7 +439,10 @@ public class Yas {
           }
           count = 0;
         }
-        System.out.println(MessageFormat.format("{0}. {1}", ++index, malware.getName()));
+        
+        long bbCount = basicBlockDao.countByMalware(conn, malware.getId());
+        
+        System.out.println(MessageFormat.format("{0}. {1} BasicBlocks: {2}", ++index, malware.getName(), bbCount));
         count++;
       }
       System.out.println("");
@@ -499,4 +462,77 @@ public class Yas {
       return false;
     }
   }
+
+  private void queryCommand(String command) {
+    if (command.equals("query")) {
+      showQueryHelp();
+    } else {
+      String[] parts = splitCommand(command);
+      if (parts.length == 3 && parts[1].equals("top")) {
+        try {
+          int top = Integer.parseInt(parts[2]);
+          queryInDB(top);
+        } catch (NumberFormatException ex) {
+          System.out.println("Top should be an integer.");
+          showQueryHelp();
+        } catch (SQLException | ClassNotFoundException ex) {
+          Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      } else if (parts.length == 5 && parts[1].equals("top") && parts[3].equals("in")) {
+        try {
+          int top = Integer.parseInt(parts[2]);
+          queryInFamily(top, parts[4]);
+        } catch (NumberFormatException ex) {
+          System.out.println("Top should be an integer.");
+          showQueryHelp();
+        } catch (SQLException | ClassNotFoundException ex) {
+          Logger.getLogger(Yas.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      } else {
+        showQueryHelp();
+      }
+    }
+  }
+
+  private void showQueryHelp() {
+    System.out.println("Query command is not valid!");
+    System.out.println("e.g.");
+    System.out.println("query top 10");
+    System.out.println("query top 40 in Dropper");
+  }
+
+  private void queryInDB(int top) throws SQLException, ClassNotFoundException {
+    Connection conn = Database.INSTANCE.getConnection();
+    BasicBlockDao bbDao = new BasicBlockDao();
+    List<BasicBlock> bbs = bbDao.loadTopByWeight(conn, top);
+
+    MalwareDao mDao = new MalwareDao();
+    FamilyDao fDao = new FamilyDao();
+
+    int index = 1;
+    for (BasicBlock bb : bbs) {
+      Malware malware = mDao.load(conn, bb.getMalwareId());
+      Family family = fDao.load(conn, malware.getFamilyId());
+      String message = MessageFormat.format("{3}. {0} -> {1} -> {2} (weight: {4}, weight in Fam: {5})", bb.getHash(), malware.getName(), family.getName(), index, bb.getWeight(), bb.getWeightInFam());
+      System.out.println(message);
+      index++;
+    }
+  }
+
+  private void queryInFamily(int top, String familyName) throws SQLException, ClassNotFoundException {
+    Connection conn = Database.INSTANCE.getConnection();
+    BasicBlockDao bbDao = new BasicBlockDao();
+    List<BasicBlock> bbs = bbDao.loadTopInFamByWeight(conn, top, familyName);
+
+    MalwareDao mDao = new MalwareDao();
+
+    int index = 1;
+    for (BasicBlock bb : bbs) {
+      Malware malware = mDao.load(conn, bb.getMalwareId());
+      String message = MessageFormat.format("{3}. {0} -> {1} -> {2} (weight: {4}, weight in Fam: {5})", bb.getHash(), malware.getName(), familyName, index, bb.getWeight(), bb.getWeightInFam());
+      System.out.println(message);
+      index++;
+    }
+  }
+
 }
