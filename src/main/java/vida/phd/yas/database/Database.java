@@ -11,5 +11,6 @@ public enum Database {
   public Connection getConnection() throws SQLException, ClassNotFoundException {
     Class.forName("org.sqlite.JDBC");
     return DriverManager.getConnection("jdbc:sqlite:database.db");        
+    //return DriverManager.getConnection("jdbc:sqlite::memory:");
   }
 }
